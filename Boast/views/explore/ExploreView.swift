@@ -6,43 +6,53 @@
 //
 
 import SwiftUI
-import SwiftlySearch
 
 struct ExploreView: View {
 
     @EnvironmentObject var store: Store
     @StateObject var searchState = SearchState()
     @State var search: String = ""
+    let highlighter = Highlighter()
     
-    let data = (1...200).map { "Item \($0)" }
-    
+    func getColumns() -> [GridItem] {
+        if !searchState.isActive {
+            return [GridItem(.adaptive(minimum: 200), spacing: 1)]
+        }
+        return [GridItem(spacing: 10, alignment: .leading)]
+    }
+        
     var body: some View {
-        NavigationView {
-            ScrollView(.vertical) {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], alignment: .leading, spacing: 3, pinnedViews: [.sectionHeaders]) {
-                    Section(header: SearchView(text: $search, searchState: searchState)) {
-                        Group {
-                            if !searchState.isActive {
-                                ForEach(self.store.feed) { item in
-                                    ExploreEditor(item: item)
-                                }
-                            } else {
-                                SearchResults()
+        ScrollView(.vertical) {
+            LazyVGrid(columns: self.getColumns(), alignment: .leading, spacing: 1, pinnedViews: [.sectionHeaders]) {
+                Section(header: SearchView(text: $search, searchState: searchState)) {
+                    Group {
+                        if !searchState.isActive {
+                            ForEach(self.store.feed) { item in
+                                ExploreEditor(item: item)
+                                    .environmentObject(highlighter)
                             }
+                        } else {
+                            SearchResults(searchState: searchState)
                         }
                     }
-                    .padding(.all, 0)
                 }
-                .background(NavigationConfigurator { nc in
-                    let appearance = UINavigationBarAppearance()
-                    appearance.backgroundColor = .systemBackground
-                    appearance.shadowColor = .clear
-                    nc.navigationBar.standardAppearance = appearance
-                    nc.navigationBar.scrollEdgeAppearance = appearance
+                .padding(.all, 0)
+            }
+            .background(NavigationConfigurator { nc in
+                let appearance = UINavigationBarAppearance()
+                appearance.backgroundColor = .systemBackground
+                appearance.shadowColor = .clear
+                nc.navigationBar.standardAppearance = appearance
+                nc.navigationBar.scrollEdgeAppearance = appearance
+            })
+        }
+        .navigationBarTitle("Explore")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: /*@START_MENU_TOKEN@*/{}/*@END_MENU_TOKEN@*/, label: {
+                    Image(systemName: "ellipsis")
                 })
             }
-            .padding([.leading, .trailing], 3)
-            .navigationBarTitle("Explore")
         }
     }
 }
@@ -61,21 +71,17 @@ struct ExploreEditor: View {
     
     var body: some View {
         VStack {
-            NavigationLink(destination: PostView(data: item).environmentObject(editorState), isActive: $isActive) {
+            NavigationLink(destination: PostView(data: item), isActive: self.$isActive) {
                 EmptyView()
             }
-            CodeEditor(
+            CodeViewer(
                 defaultValue: item.editorValue,
-                options: [:],
-                isUserInteractionEnabled: false,
-                theme: item.theme,
-                syntax: item.syntax
+                isPlaying: false
             )
-            .frame(minWidth: /*@START_MENU_TOKEN@*/0/*@END_MENU_TOKEN@*/, idealWidth: /*@START_MENU_TOKEN@*/100/*@END_MENU_TOKEN@*/, maxWidth: /*@START_MENU_TOKEN@*/.infinity/*@END_MENU_TOKEN@*/, minHeight: 400, idealHeight: 400, maxHeight: 400, alignment: .leading)
+            .frame(minWidth: /*@START_MENU_TOKEN@*/0/*@END_MENU_TOKEN@*/, idealWidth: /*@START_MENU_TOKEN@*/100/*@END_MENU_TOKEN@*/, maxWidth: /*@START_MENU_TOKEN@*/.infinity/*@END_MENU_TOKEN@*/, minHeight: 300, idealHeight: 300, maxHeight: 300, alignment: .leading)
             .onTapGesture {
                 self.isActive = true
             }
-            .environmentObject(editorState)
         }
         .padding(.all, 0)
     }

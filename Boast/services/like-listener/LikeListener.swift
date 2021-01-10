@@ -14,11 +14,10 @@ class LikeListener: ObservableObject {
     var handler: ListenerRegistration?
     @Published var isLiked: Bool = false
     
-    init(id: String, user: String?) {
-        if user != nil {
+    init(_ path: String?) {
+        if path != nil {
             let db = Firestore.firestore()
-            let doc = db.collection("posts").document(id)
-                .collection("likes").document(user!)
+            let doc = db.document(path!)
             self.handler = doc.addSnapshotListener { (querySnapshot, error) in
                 guard let exists = querySnapshot?.exists else {
                     print("Error fetching documents: \(error!)")

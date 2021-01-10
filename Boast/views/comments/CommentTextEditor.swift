@@ -10,6 +10,8 @@ import SwiftUI
 struct CommentTextEditor: UIViewRepresentable {
     @Binding var text: String
     @Binding var height: CGFloat
+    @Binding var disabled: Bool
+    @ObservedObject var commentBarState: CommentBarState
     
     func makeUIView(context: Context) -> UITextView  {
         let textEditor = UITextView()
@@ -22,7 +24,20 @@ struct CommentTextEditor: UIViewRepresentable {
     }
     
     func updateUIView(_ uiView: UITextView, context: Context) {
-
+        if self.disabled {
+            uiView.isEditable = false
+        }
+        else {
+            uiView.isEditable = true
+        }
+        
+        if commentBarState.isActive {
+            uiView.becomeFirstResponder()
+        }
+        
+        if self.text == "" {
+            uiView.text = ""
+        }
     }
     
     func makeCoordinator() -> Coordinator {
@@ -59,19 +74,23 @@ struct CommentTextEditor: UIViewRepresentable {
                     return
                 }
                 let size = textView.sizeThatFits(textView.bounds.size)
-                print("SIZE", size)
                 if self?.dynamicHeightTextField.height != size.height {
                     self?.dynamicHeightTextField.height = size.height
                 }
             }
 
         }
+        
+        func textViewShouldEndEditing(_ textView: UITextView) -> Bool {
+            self.dynamicHeightTextField.commentBarState.isActive = false
+            return true
+        }
     }
     
 }
 
-struct CommentTextEditor_Previews: PreviewProvider {
-    static var previews: some View {
-        CommentTextEditor(text: .constant("Test"), height: .constant(40))
-    }
-}
+//struct CommentTextEditor_Previews: PreviewProvider {
+//    static var previews: some View {
+//        CommentTextEditor(text: .constant("Test"), height: .constant(40), disabled: .constant(false), isActive: .constant(false))
+//    }
+//}

@@ -17,8 +17,12 @@ struct SizePreferenceKey: PreferenceKey {
 }
 
 struct CommentBar: View {
+    var postId: String
+    var author: String?
+    @ObservedObject var commentBarState: CommentBarState
     @State var comment: String = ""
     @State var height: CGFloat = 40
+    @State var disabled: Bool = false
     @State var textEditorSize: CGSize?
     
     var textFieldHeight: CGFloat {
@@ -37,33 +41,55 @@ struct CommentBar: View {
     }
     
     var body: some View {
-        HStack {
-            AsyncImage(url: "https://i.pinimg.com/originals/51/f6/fb/51f6fb256629fc755b8870c801092942.png")
-                .padding(.top, 3.0)
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 40, height: 40, alignment: .top)
+        VStack {
+            Divider()
             HStack {
-                CommentTextEditor(text: $comment, height: $height)
-                Button(action: {
-                    print("Posting...")
-                }, label: {
-                    Text("Post")
-                })
+                AsyncImage(url: "https://i.pinimg.com/originals/51/f6/fb/51f6fb256629fc755b8870c801092942.png")
+                    .padding(.top, 3.0)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 40, height: 40, alignment: .top)
+                HStack {
+                    CommentTextEditor(
+                        text: $comment,
+                        height: $height,
+                        disabled: $disabled,
+                        commentBarState: commentBarState
+                    )
+                    Button(action: {
+                        self.disabled = true
+                        if author != nil {
+                            postComment(
+                                text: self.comment,
+                                postId: postId,
+                                author: self.author!,
+                                roles: [
+                                    self.author!: "owner"
+                                ],
+                                replyId: commentBarState.replyId
+                            ) { succes in
+                                self.disabled = false
+                                self.comment = ""
+                            }
+                        }
+                    }, label: {
+                        Text("Post")
+                    })
+                }
+                .padding([.leading, .trailing], 10)
+                .frame(minWidth: /*@START_MENU_TOKEN@*/0/*@END_MENU_TOKEN@*/, idealWidth: /*@START_MENU_TOKEN@*/100/*@END_MENU_TOKEN@*/, maxWidth: /*@START_MENU_TOKEN@*/.infinity/*@END_MENU_TOKEN@*/, minHeight: textFieldHeight, idealHeight: textFieldHeight, maxHeight: textFieldHeight, alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.secondary, lineWidth: 1)
+                        .opacity(0.5)
+                )
             }
-            .padding([.leading, .trailing], 10)
-            .frame(minWidth: /*@START_MENU_TOKEN@*/0/*@END_MENU_TOKEN@*/, idealWidth: /*@START_MENU_TOKEN@*/100/*@END_MENU_TOKEN@*/, maxWidth: /*@START_MENU_TOKEN@*/.infinity/*@END_MENU_TOKEN@*/, minHeight: textFieldHeight, idealHeight: textFieldHeight, maxHeight: textFieldHeight, alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/)
-            .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(Color.secondary, lineWidth: 1)
-                    .opacity(0.5)
-            )
         }
-        .padding(10)
+        .padding([.leading, .bottom, .trailing])
     }
 }
 
-struct CommentBar_Previews: PreviewProvider {
-    static var previews: some View {
-        CommentBar()
-    }
-}
+//struct CommentBar_Previews: PreviewProvider {
+//    static var previews: some View {
+//        CommentBar(postId: "", isActive: .constant(false))
+//    }
+//}

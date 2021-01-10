@@ -10,12 +10,8 @@ import Combine
 import Foundation
 
 struct AsyncImage: View {
-    @ObservedObject private var loader: ImageLoader
-    
-    init(url: String) {
-        let imgUrl: URL = URL(string: url)!
-        loader = ImageLoader(url: imgUrl)
-    }
+    var url: String
+    @StateObject private var loader: ImageLoader = ImageLoader()
     
     private var image: some View {
         Group {
@@ -29,9 +25,13 @@ struct AsyncImage: View {
         }
     }
     
+    func fetchImage() {
+        self.loader.load(url: URL(string: self.url)!)
+    }
+    
     var body: some View {
         image
-            .onAppear(perform: loader.load)
+            .onAppear(perform: self.fetchImage)
             .onDisappear(perform: loader.cancel)
     }
 }
@@ -45,18 +45,14 @@ struct AsyncImage_Previews: PreviewProvider {
 class ImageLoader: ObservableObject {
     
     @Published var image: UIImage?
-    private let url: URL
+    private var url: URL = URL(string: "https://i.pinimg.com/originals/51/f6/fb/51f6fb256629fc755b8870c801092942.png")!
     private var cancellable: AnyCancellable?
-
-    init(url: URL) {
-        self.url = url
-    }
     
     deinit {
         cancellable?.cancel()
     }
 
-    func load() {
+    func load(url: URL) {
         cancellable = URLSession.shared.dataTaskPublisher(for: url)
             .map { UIImage(data: $0.data) }
             .replaceError(with: nil)

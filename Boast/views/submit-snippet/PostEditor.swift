@@ -14,6 +14,7 @@ import FirebaseStorage
 
 struct PostEditor: View {
     @Binding var showEditor: Bool
+    @Binding var currString: String
     @State var caption: String = ""
     @State var mention: String = ""
     @EnvironmentObject var editorState: EditorState
@@ -37,23 +38,17 @@ struct PostEditor: View {
                 let syntax: String = defaults.string(forKey: Constants.defaultsKey.syntax) ?? ""
     
                 Button(action: {
-                    let db = Firestore.firestore()
-                    db.collection("posts").addDocument(data: [
-                        "editorValue": editorState.editorValue,
-                        "theme": theme,
-                        "syntax": syntax,
-                        "caption": caption,
-                        "mention": mention,
-                        "author": authState.currentUser?.uid ?? "",
-                        "roles": [
+                    submitSnippet(
+                        editorValue: self.currString,
+                        theme: theme,
+                        syntax: syntax,
+                        caption: caption,
+                        mention: mention,
+                        author: authState.currentUser?.uid ?? "",
+                        roles: [
                             authState.currentUser?.uid: "owner"
                         ]
-                    ]) { err in
-                        if let err = err {
-                            print("Error writing document: \(err)")
-                        } else {
-                            print("Document successfully written!")
-                        }
+                    ) { success in
                         self.showEditor = false
                     }
                 }, label: {
@@ -67,8 +62,8 @@ struct PostEditor: View {
     }
 }
 
-struct PostEditor_Previews: PreviewProvider {
-    static var previews: some View {
-        PostEditor(showEditor: .constant(true))
-    }
-}
+//struct PostEditor_Previews: PreviewProvider {
+//    static var previews: some View {
+////        PostEditor(showEditor: .constant(true))
+//    }
+//}

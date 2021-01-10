@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 extension TimeInterval {
 
@@ -20,26 +21,68 @@ extension TimeInterval {
             if hours >= 24 {
                 let days = (hours / 24)
                 if (days == 1) {
-                    return String(format: "%0.1d day ago", days)
+                    return "\(days) day ago"
                 }
-                return String(format: "%0.1d days ago", days)
+                return "\(days) days ago"
             }
-            return String(format: "%0.2d hours ago", hours)
+            return "\(hours) hours ago"
         }
         else if minutes > 0 {
             if (minutes == 1) {
-                return String(format: "%0.1d minute ago", minutes)
+                return "\(minutes) minute ago"
             }
-            return String(format: "%0.2d minutes ago", minutes)
+            return "\(minutes) minutes ago"
         }
         else if seconds > 0 {
             if (seconds == 1) {
-                return String(format: "%0.1d second ago", seconds)
+                return "\(seconds) second ago"
             }
-            return String(format: "%0.2d seconds ago", seconds)
+            return "\(seconds) seconds ago"
         }
 
         return "moments ago"
     }
     
+}
+
+extension Binding {
+    /// Execute block when value is changed.
+    ///
+    /// Example:
+    ///
+    ///     Slider(value: $amount.didSet { print($0) }, in: 0...10)
+    func didSet(execute: @escaping (Value) ->Void) -> Binding {
+        return Binding(
+            get: {
+                return self.wrappedValue
+            },
+            set: {
+                self.wrappedValue = $0
+                execute($0)
+            }
+        )
+    }
+}
+
+extension UIColor {
+
+    func lighter(by percentage: CGFloat = 30.0) -> UIColor? {
+        return self.adjust(by: abs(percentage) )
+    }
+
+    func darker(by percentage: CGFloat = 30.0) -> UIColor? {
+        return self.adjust(by: -1 * abs(percentage) )
+    }
+
+    func adjust(by percentage: CGFloat = 30.0) -> UIColor? {
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        if self.getRed(&red, green: &green, blue: &blue, alpha: &alpha) {
+            return UIColor(red: min(red + percentage/100, 1.0),
+                           green: min(green + percentage/100, 1.0),
+                           blue: min(blue + percentage/100, 1.0),
+                           alpha: alpha)
+        } else {
+            return nil
+        }
+    }
 }
