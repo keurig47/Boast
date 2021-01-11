@@ -12,4 +12,3 @@ Instagram-like SwiftUI application for sharing code snippets
 <img width="400" src="https://github.com/keurig47/Boast/blob/test/IMG_0302.PNG" />
 <img width="400" src="https://github.com/keurig47/Boast/blob/test/IMG_0303.PNG" />
 </div>
-
