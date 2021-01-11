@@ -7,56 +7,92 @@
 
 import SwiftUI
 
+class EditorModel: ObservableObject {
+    @Published var attributedText: NSAttributedString = NSAttributedString()
+}
+
+let highlighterTool = Highlighter()
+
 struct CodeEditor: View {
-    @State private var loading: Bool = true
-    @StateObject private var kguard = KeyboardGuardian()
-    @EnvironmentObject var store: Store
-    @EnvironmentObject var editorState: EditorState
+    var defaultValue: String?
     
-    var defaultValue: String = ""
-    var options: [String: Any] = [:]
-    var isUserInteractionEnabled: Bool = true
-    var theme: String?
-    var syntax: String?
+    var body: some View {
+        HighlightJSView(
+            defaultValue: defaultValue,
+            currString: .constant("")
+        )
+    }
+}
+
+struct CodeViewer: View {
+    var defaultValue: String?
+    var isPlaying: Bool
+    var playState: PlayState?
+    @State var isHidden: Bool = true
     
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                WebView(
-                    kguard: kguard,
-                    defaultValue: defaultValue,
-                    options: options,
-                    isUserInteractionEnabled: isUserInteractionEnabled,
-                    theme: theme,
-                    syntax: syntax,
-                    loading: $loading
-                )
-                .environmentObject(editorState)
-                if loading {
-                    ProgressView()
-                        .scaleEffect(1.5, anchor: .center)
-                }
-                if !kguard.keyboardIsHidden && (options["readOnly"] == nil) {
-                    AccessoryBar(
-                        geometry: geometry.frame(in: .local),
-                        keyboardRect: $kguard.keyboardRect,
-                        kguard: kguard)
-                        .position(x: geometry.frame(in: .local).midX, y:   (kguard.keyboardRect.minY - (geometry.frame(in: .global).minY - geometry.safeAreaInsets.top + 22)))
-                        .ignoresSafeArea()
-                }
+                CodeViewerWrapper(defaultValue: defaultValue, isPlaying: isPlaying, playState: playState)
+//                    .blur(radius: 3)
+//                if isPlaying {
+//                    VStack {
+//                        Text("Snippet")
+//                            .font(.title2)
+//                            .padding()
+//                        Spacer()
+//                        Text("Hello world code snippet that is useful for nothing!")
+//                            .font(.caption)
+//                            .multilineTextAlignment(.center)
+//                        Spacer()
+//                    }
+//                    .frame(width: (2 * geometry.size.width/3), height: (2 * geometry.size.height/3), alignment: .center)
+//                    .background(Color(UIColor.systemBackground).opacity(0.75))
+//                    .cornerRadius(10)
+//                }
+            }
+            .animation(.spring())
+        }
+    }
+}
+
+struct CodeViewerWrapper: UIViewRepresentable {
+    var defaultValue: String?
+    var isPlaying: Bool
+    var playState: PlayState?
+    
+    func makeUIView(context: Context) -> CAViewContainer {
+        let container = CAViewContainer()
+        container.onUpdate = self.onUpdate
+        if self.isPlaying {
+            DispatchQueue.main.async {
+                let attributedString = highlighterTool.highlight(text: defaultValue ?? "")
+                container.setAttributed(attributedString)
             }
         }
-        .onAppear {
-            kguard.addObserver()
+        return container
+    }
+    
+    func onUpdate(time: Double) {
+        if playState != nil {
+            playState!.time = time
         }
-        .onDisappear {
-            kguard.removeObserver()
+    }
+    
+    func updateUIView(_ uiView: CAViewContainer, context: Context) {
+        if self.isPlaying {
+            DispatchQueue.main.async {
+                let attributedString = highlighterTool.highlight(text: defaultValue ?? "")
+                uiView.setAttributed(attributedString)
+            }
+        } else {
+            uiView.pause()
         }
     }
 }
 
 struct CodeEditor_Previews: PreviewProvider {
     static var previews: some View {
-        CodeEditor()
+        CodeEditor(defaultValue: "")
     }
 }

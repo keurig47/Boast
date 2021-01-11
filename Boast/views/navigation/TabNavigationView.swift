@@ -11,6 +11,8 @@ struct TabNavigationView: View {
     @State var currentTab = 1
     @State var showEditor = false
     @EnvironmentObject var store: Store
+    @EnvironmentObject var authState: AuthStateProvider
+    let profileViewer = ProfileViewer()
     
     init() {
         UITabBar.appearance().alpha = 0
@@ -18,14 +20,23 @@ struct TabNavigationView: View {
     
     var body: some View {
         TabView(selection: $currentTab) {
-            HomeView()
-                .tag(1)
-            ExploreView()
-                .tag(2)
-            ActivityView()
-                .tag(3)
-            ProfileView()
-                .tag(4)
+            NavigationView {
+                HomeView()
+            }
+            .tag(1)
+            NavigationView {
+                BrowseView()
+            }
+            .tag(2)
+            NavigationView {
+                ActivityView()
+            }
+            .tag(4)
+            NavigationView {
+                ProfileView(user: self.store.currentUser?.uid)
+                    .environmentObject(profileViewer)
+            }
+            .tag(5)
         }
         .toolbar {
             ToolbarItemGroup(placement: .bottomBar) {
@@ -38,29 +49,30 @@ struct TabNavigationView: View {
                 Button(action: {
                     currentTab = 2
                 }, label: {
-                    Image(systemName: (currentTab == 2) ? "magnifyingglass.circle.fill" : "magnifyingglass.circle")
+                    Image(systemName: (currentTab == 2) ? "hand.draw.fill" : "hand.draw")
                 })
                 Spacer()
                 Button(action: {
-                    showEditor = true
+                    self.showEditor = true
                 }, label: {
-                    Image(systemName: (showEditor) ? "terminal.fill" : "terminal")
-                })
-                Spacer()
-                Button(action: {
-                    currentTab = 3
-                }, label: {
-                    Image(systemName: (currentTab == 3) ? "heart.fill" : "heart")
+                    Image(systemName: (self.showEditor) ? "terminal.fill" : "terminal")
                 })
                 Spacer()
                 Button(action: {
                     currentTab = 4
                 }, label: {
-                    Image(systemName: (currentTab == 4) ? "person.fill" : "person")
+                    Image(systemName: (currentTab == 4) ? "envelope.fill" : "envelope")
+                })
+                Spacer()
+                Button(action: {
+                    currentTab = 5
+                }, label: {
+                    Image(systemName: (currentTab == 5) ? "person.fill" : "person")
                 })
             }
         }
         .fullScreenCover(isPresented: $showEditor) {
+//            EditorControllerWrapper()
             EditorModal(showEditor: $showEditor)
                 .environmentObject(store)
         }

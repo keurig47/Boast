@@ -9,18 +9,15 @@ import SwiftUI
 
 struct SearchBar: UIViewRepresentable {
 
-    @Binding var text: String
     @ObservedObject var searchState: SearchState
 
     class Coordinator: NSObject, UISearchBarDelegate {
 
         var parent: SearchBar
-        @Binding var text: String
         @ObservedObject var searchState: SearchState
 
-        init(_ parent: SearchBar, text: Binding<String>, searchState: SearchState) {
+        init(_ parent: SearchBar, searchState: SearchState) {
             self.parent = parent
-            self._text = text
             self.searchState = searchState
         }
         
@@ -31,7 +28,8 @@ struct SearchBar: UIViewRepresentable {
         }
 
         func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-            text = searchText
+            searchState.text = searchText
+            searchBar.text = searchText
         }
         
         func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
@@ -49,7 +47,7 @@ struct SearchBar: UIViewRepresentable {
     }
 
     func makeCoordinator() -> Coordinator {
-        return Coordinator(self, text: $text, searchState: searchState)
+        return Coordinator(self, searchState: searchState)
     }
 
     func makeUIView(context: UIViewRepresentableContext<SearchBar>) -> UISearchBar {
@@ -59,13 +57,14 @@ struct SearchBar: UIViewRepresentable {
         searchBar.backgroundImage = image
         searchBar.backgroundColor = .clear
         searchBar.barTintColor = .clear
+        searchBar.autocapitalizationType = .none
         searchBar.placeholder = "Search"
         return searchBar
     }
 
     func updateUIView(_ uiView: UISearchBar,
                       context: UIViewRepresentableContext<SearchBar>) {
-        uiView.text = text
+        uiView.text = searchState.text
     }
 }
 

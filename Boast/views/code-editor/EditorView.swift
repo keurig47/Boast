@@ -15,6 +15,7 @@ extension CGFloat {
 }
 
 class EditorState: ObservableObject {
+    @Published var start: Bool = true
     @Published var editorValue: String = ""
     @Published var theme: String = ""
     @Published var syntax: String = ""
@@ -22,14 +23,14 @@ class EditorState: ObservableObject {
     @Published var color: UIColor = UIColor.label
     @Published var snapshot: UIImage?
     
-    var kguard: KeyboardGuardian?
-    
-    func register(kguard: KeyboardGuardian) {
-        self.kguard = kguard
-    }
-    
+//    var kguard: KeyboardGuardian?
+//
+//    func register(kguard: KeyboardGuardian) {
+//        self.kguard = kguard
+//    }
+//
     func getValue() {
-        self.kguard?.getValue()
+//        self.kguard?.getValue()
     }
     
 }
@@ -43,11 +44,21 @@ struct NavigationConfigurator: UIViewControllerRepresentable {
             
             override func viewWillAppear(_ animated: Bool) {
                 super.viewWillAppear(animated)
+                self.modalPresentationCapturesStatusBarAppearance = true
+                self.setNeedsStatusBarAppearanceUpdate()
+            }
+            
+            override func viewDidAppear(_ animated: Bool) {
+                super.viewDidAppear(animated)
                 self.setNeedsStatusBarAppearanceUpdate()
             }
             
             override var preferredStatusBarStyle: UIStatusBarStyle {
                 return .lightContent
+            }
+            
+            override var prefersStatusBarHidden: Bool {
+                return true
             }
             
         }
@@ -66,69 +77,56 @@ struct NavigationConfigurator: UIViewControllerRepresentable {
 struct EditorView: View {
     @Binding var showEditor: Bool
     @State var showNext: Bool = false
-    @EnvironmentObject var editorState: EditorState
+    @State var text: String = ""
+    @StateObject var highlighter: Highlighter = Highlighter()
+    //@EnvironmentObject var editorState: EditorState
     
     var body: some View {
-        ZStack {
-            VStack {
-                CodeEditor()
-                    .navigationBarTitleDisplayMode(.inline)
-                    .background(
-                        NavigationLink(destination: PostEditor(showEditor: $showEditor)
-                                        .environmentObject(editorState), isActive: $showNext) {
-                          EmptyView()
-                        }
-                    )
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing ) {
-                            Button("Next") {
-                                showNext = true
-                                self.editorState.getValue()
-                            }
-                        }
-                        ToolbarItem(placement: .principal) {
-                            Text("Boast")
-                                .font(.title3)
-                                .foregroundColor(Color(editorState.color))
-                        }
-                        ToolbarItem(placement: .navigationBarLeading ) {
-                            Button(action: {
-                                self.showEditor.toggle()
-                            }, label: {
-                                Text("Cancel")
-                            })
-                        }
-                    }
-            }
-            .background(NavigationConfigurator { nc in
-                let appearance = UINavigationBarAppearance()
-                if !showNext {
-                    nc.navigationBar.isTranslucent = false
-                    appearance.shadowColor = .clear
-                }
-                appearance.backgroundColor = showNext ? .systemBackground: editorState.backgroundColor
-                nc.navigationBar.standardAppearance = appearance
-                nc.navigationBar.scrollEdgeAppearance = appearance
-                nc.navigationBar.barTintColor = showNext ? .systemBackground: editorState.backgroundColor
-            })
+        VStack {
+            CodeEditor()
         }
-        .background(Color(editorState.backgroundColor))
-        .ignoresSafeArea()
-        .edgesIgnoringSafeArea(/*@START_MENU_TOKEN@*/.all/*@END_MENU_TOKEN@*/)
     }
 }
 
 struct EditorModal: View {
-    
     @Binding var showEditor: Bool
-    let editorState: EditorState = EditorState()
+    @State var showNext: Bool = false
+    @State var currString: String = ""
+    @ObservedObject var editorState: EditorState = EditorState()
     
     var body: some View {
         NavigationView {
-            EditorView(showEditor: $showEditor)
-                .environmentObject(editorState)
+            VStack {
+                HighlightJSView(defaultValue: "", currString: self.$currString)
+                NavigationLink(
+                    destination: PostEditor(showEditor: self.$showEditor, currString: self.$currString)
+                        .environmentObject(self.editorState),
+                    isActive: self.$showNext,
+                    label: {
+                        EmptyView()
+                    })
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing ) {
+                        Button("Next") {
+                            self.showNext = true
+                        }
+                    }
+                    ToolbarItem(placement: .principal) {
+                        Text("Boast")
+                            .font(.title3)
+                    }
+                    ToolbarItem(placement: .navigationBarLeading ) {
+                        Button(action: {
+                            self.showEditor.toggle()
+                        }, label: {
+                            Text("Cancel")
+                        })
+                    }
+                }
         }
-        .navigationViewStyle(StackNavigationViewStyle())
+        .ignoresSafeArea(.keyboard)
     }
     
 }

@@ -8,13 +8,13 @@
 import SwiftUI
 
 struct RootView: View {
-    let store: Store = Store()
+    @ObservedObject var store: Store = Store()
     @ObservedObject var authState: AuthStateProvider = AuthStateProvider()
     
     var body: some View {
         Group {
             if authState.showLogin {
-                LoginScreenController()
+                AuthenticationView()
             }
             else {
                 TabNavigationView()
@@ -22,8 +22,6 @@ struct RootView: View {
                     .environmentObject(authState)
             }
         }
-
-            
     }
 }
 

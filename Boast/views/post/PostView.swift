@@ -9,18 +9,12 @@ import SwiftUI
 
 struct PostView: View {
     var data: PostData
-    @EnvironmentObject var editorState: EditorState
     
     var body: some View {
         VStack(alignment: .leading) {
             CodeEditor(
-                defaultValue: data.editorValue,
-                options: [:],
-                isUserInteractionEnabled: true,
-                theme: data.theme,
-                syntax: data.syntax
+                defaultValue: data.editorValue
             )
-            .environmentObject(editorState)
         }
         .navigationTitle(data.displayName)
         .navigationBarTitleDisplayMode(.inline)
