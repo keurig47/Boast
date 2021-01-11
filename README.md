@@ -8,4 +8,5 @@
 <img width="400" src="https://github.com/keurig47/Boast/blob/test/IMG_0302.PNG" />
 </div>
 <img width="400" src="https://github.com/keurig47/Boast/blob/test/IMG_0303.PNG" />
+<img width="400" src="https://github.com/keurig47/Boast/blob/test/boastgif.gif" />
 
